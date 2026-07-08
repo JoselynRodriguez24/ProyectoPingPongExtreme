@@ -35,8 +35,10 @@ public class Paleta {
         this.color = color;
     }
 
-    //getter
-    
+    // ==========================
+    // GETTERS
+    // ==========================
+
     public int getX() {
         return x;
     }
@@ -61,7 +63,9 @@ public class Paleta {
         return color;
     }
 
-    //setter
+    // ==========================
+    // SETTERS
+    // ==========================
 
     public void setX(int x) {
         this.x = x;
@@ -79,8 +83,10 @@ public class Paleta {
         this.color = color;
     }
 
-    //movimiento de la paleta
-    
+    // ==========================
+    // MOVIMIENTO
+    // ==========================
+
     /**
      * Mueve la paleta hacia arriba.
      */
@@ -102,10 +108,12 @@ public class Paleta {
      */
     public void validarLimites(int alturaPanel) {
 
+        // Límite superior
         if (y < 0) {
             y = 0;
         }
 
+        // Límite inferior
         if (y + alto > alturaPanel) {
             y = alturaPanel - alto;
         }

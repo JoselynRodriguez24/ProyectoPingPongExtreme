@@ -25,8 +25,10 @@ public class Jugador {
         this.rondasGanadas = 0;
     }
 
-    //getter
-    
+    // ==========================
+    // GETTERS
+    // ==========================
+
     public String getNombre() {
         return nombre;
     }
@@ -39,8 +41,10 @@ public class Jugador {
         return rondasGanadas;
     }
 
-    //setter
-    
+    // ==========================
+    // SETTERS
+    // ==========================
+
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
@@ -53,8 +57,10 @@ public class Jugador {
         this.rondasGanadas = rondasGanadas;
     }
 
-    //metodos
-    
+    // ==========================
+    // MÉTODOS DEL JUEGO
+    // ==========================
+
     /**
      * Suma puntos al jugador.
      */

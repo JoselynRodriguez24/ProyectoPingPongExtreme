@@ -11,7 +11,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-//integrante 2
 import juego.Jugador;
 import juego.Paleta;
 import juego.Partida;
@@ -63,8 +62,6 @@ public class PanelJuego extends JPanel {
     private final String nombreJugador1;
     private final String nombreJugador2;
     private final String dificultad;
-    
-    //integrante 2: atributos
     private Jugador jugador1;
     private Jugador jugador2;
 
@@ -260,6 +257,7 @@ public class PanelJuego extends JPanel {
         g2d.drawOval(ancho / 2 - radio, alto / 2 - radio, radio * 2, radio * 2);
         
         //integrnte 2
+        
         paleta1.dibujar(g2d);
         paleta2.dibujar(g2d);
 
@@ -303,14 +301,10 @@ public class PanelJuego extends JPanel {
         partidaIniciada = false;
         partidaPausada = false;
         segundosRestantes = DURACION_RONDA_SEGUNDOS;
-        //reinicia puntaje
         puntajeJugador1 = 0;
         puntajeJugador2 = 0;
-        //reinicia jugadores
-        jugador1.reiniciarJugador();
-        jugador2.reiniciarJugador();
-        // se crea una nueva partida
-        partida = new Partida(jugador1, jugador2);
+        rondasGanadasJugador1 = 0;
+        rondasGanadasJugador2 = 0;
 
         if (temporizadorSwing != null) {
             temporizadorSwing.stop();
@@ -331,54 +325,19 @@ public class PanelJuego extends JPanel {
     }
 
     private void iniciarTemporizador() {
-    temporizadorSwing = new Timer(1000, e -> {
-        segundosRestantes--;
-        etiquetaTemporizador.setText(formatearTiempo(segundosRestantes));
-        etiquetaTemporizador.setForeground(
-                segundosRestantes <= 10 ? EstiloVisual.ACENTO_PELIGRO : EstiloVisual.TEXTO_CLARO);
-
-        if (segundosRestantes <= 0) {
-            temporizadorSwing.stop();
-            
-            //integrante 2
-            // Finaliza la ronda
-            partida.finalizarRonda();
-
-            // Muestra el ganador de la ronda
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Fin de la ronda.\n\n"
-                    + "Ronda " + partida.getRondaActual() + "\n"
-                    + "Jugador 1: " + jugador1.getRondasGanadas() + " Rondas ganadas\n"
-                    + "Jugador 2: " + jugador2.getRondasGanadas() + " Rondas ganadas"
-            );
-
-            // Si ya terminó la partida
-            if (partida.partidaTerminada()) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "¡Partida terminada!\n\n"
-                        + "Ganador: " + partida.obtenerGanador().getNombre()
-                );
-
-            } else {
-
-                // Pasar a la siguiente ronda
-                partida.siguienteRonda();
-
-                // Reiniciar el tiempo
-                segundosRestantes = 60;
-                etiquetaTemporizador.setText(formatearTiempo(segundosRestantes));
-
-                // Iniciar nuevamente el temporizador
-                iniciarTemporizador();
+        temporizadorSwing = new Timer(1000, e -> {
+            segundosRestantes--;
+            etiquetaTemporizador.setText(formatearTiempo(segundosRestantes));
+            etiquetaTemporizador.setForeground(
+                    segundosRestantes <= 10 ? EstiloVisual.ACENTO_PELIGRO : EstiloVisual.TEXTO_CLARO);
+            if (segundosRestantes <= 0) {
+                temporizadorSwing.stop();
+                // TODO Integrante 2: aqui se debe determinar el ganador de la ronda
+                // comparando puntajeJugador1 vs puntajeJugador2 (punto 6 del enunciado).
             }
-        }
-    });
-
-    temporizadorSwing.start();
-}
+        });
+        temporizadorSwing.start();
+    }
 
     private String formatearTiempo(int segundos) {
         int min = segundos / 60;
@@ -448,8 +407,7 @@ public class PanelJuego extends JPanel {
     // ---------------------------------------------------------------
     // Puntajes (uso temporal; Integrante 4 debe sincronizar esto)
     // ---------------------------------------------------------------
-    
-    
+
     public void sumarPuntajeJugador1(int puntos) {
     puntajeJugador1 += puntos;
     jugador1.sumarPuntos(puntos);
@@ -463,17 +421,9 @@ public class PanelJuego extends JPanel {
 }
 
     private void actualizarEtiquetasPuntaje() {
-    etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntajeJugador1);
-    etiquetaPuntaje2.setText(nombreJugador2 + "  " + puntajeJugador2);
-
-    etiquetaRondas.setText(
-        "RONDAS " + jugador1.getRondasGanadas()
-        + " - "
-        + jugador2.getRondasGanadas()
-        + " | DIFICULTAD: "
-        + dificultad.toUpperCase()
-    );
-}
+        etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntajeJugador1);
+        etiquetaPuntaje2.setText(nombreJugador2 + "  " + puntajeJugador2);
+    }
 
     // ---------------------------------------------------------------
     // Puntos de extension para el resto del equipo
