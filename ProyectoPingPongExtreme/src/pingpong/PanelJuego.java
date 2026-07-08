@@ -15,6 +15,10 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import juego.Jugador;
+import juego.Paleta;
+import juego.Partida;
+
 /**
  * Panel principal del area de juego.
  *
@@ -62,6 +66,15 @@ public class PanelJuego extends JPanel {
     private final String nombreJugador1;
     private final String nombreJugador2;
     private final String dificultad;
+    
+    //Integrante 2
+    private Jugador jugador1;
+    private Jugador jugador2;
+
+    private Paleta paleta1;
+    private Paleta paleta2;
+
+    private Partida partida;
 
     // TODO Integrante 4: sincronizar estos puntajes (AtomicInteger / synchronized) cuando
     // varios hilos de bolas empiecen a modificarlos al mismo tiempo.
@@ -99,6 +112,28 @@ public class PanelJuego extends JPanel {
         this.nombreJugador1 = nombreJugador1;
         this.nombreJugador2 = nombreJugador2;
         this.dificultad = dificultad;
+        
+        //integrante 2
+        jugador1 = new Jugador(nombreJugador1);
+        jugador2 = new Jugador(nombreJugador2);
+
+        partida = new Partida(jugador1, jugador2);
+
+        paleta1 = new Paleta(
+                30,
+                200,
+                15,
+                90,
+                8,
+                Color.WHITE);
+
+        paleta2 = new Paleta(
+                750,
+                200,
+                15,
+                90,
+                8,
+                Color.WHITE);
 
         setLayout(new BorderLayout());
         setBackground(EstiloVisual.FONDO_PRINCIPAL);
@@ -106,6 +141,30 @@ public class PanelJuego extends JPanel {
         construirAreaJuego();
         construirPanelInferior();
         configurarTeclado();
+        
+    //Integrante 2
+    Timer movimiento = new Timer(15, e -> {
+
+    if(arribaJugador1)
+        paleta1.subir();
+
+    if(abajoJugador1)
+        paleta1.bajar();
+
+    if(arribaJugador2)
+        paleta2.subir();
+
+    if(abajoJugador2)
+        paleta2.bajar();
+
+    paleta1.validarLimites(areaJuego.getHeight());
+    paleta2.validarLimites(areaJuego.getHeight());
+
+    areaJuego.repaint();
+
+});
+
+movimiento.start();
     }
 
     // ---------------------------------------------------------------
@@ -216,6 +275,10 @@ public class PanelJuego extends JPanel {
         g2d.setStroke(new BasicStroke(2));
         int radio = 60;
         g2d.drawOval(ancho / 2 - radio, alto / 2 - radio, radio * 2, radio * 2);
+        
+        //interante 2
+        paleta1.dibujar(g2d);
+        paleta2.dibujar(g2d);
 
         // Delega el dibujo de paletas y bolas a quien se haya registrado.
         for (Dibujable d : dibujables) {
@@ -288,6 +351,21 @@ public class PanelJuego extends JPanel {
                     segundosRestantes <= 10 ? EstiloVisual.ACENTO_PELIGRO : EstiloVisual.TEXTO_CLARO);
             if (segundosRestantes <= 0) {
                 temporizadorSwing.stop();
+                partida.finalizarRonda();
+                partida.siguienteRonda();
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Fin de la ronda " + (partida.getRondaActual() - 1));
+
+                if (partida.partidaTerminada()) {
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Ganador de la partida: "
+                            + partida.obtenerGanador().getNombre());
+
+                }
                 // TODO Integrante 2: aqui se debe determinar el ganador de la ronda
                 // comparando puntajeJugador1 vs puntajeJugador2 (punto 6 del enunciado).
             }
@@ -365,14 +443,16 @@ public class PanelJuego extends JPanel {
     // ---------------------------------------------------------------
 
     public void sumarPuntajeJugador1(int puntos) {
-        puntajeJugador1 += puntos;
-        actualizarEtiquetasPuntaje();
-    }
+    puntajeJugador1 += puntos;
+    jugador1.sumarPuntos(puntos);
+    actualizarEtiquetasPuntaje();
+}
 
     public void sumarPuntajeJugador2(int puntos) {
-        puntajeJugador2 += puntos;
-        actualizarEtiquetasPuntaje();
-    }
+    puntajeJugador2 += puntos;
+    jugador2.sumarPuntos(puntos);
+    actualizarEtiquetasPuntaje();
+}
 
     private void actualizarEtiquetasPuntaje() {
         etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntajeJugador1);
