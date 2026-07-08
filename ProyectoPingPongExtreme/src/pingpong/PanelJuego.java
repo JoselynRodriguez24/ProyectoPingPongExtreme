@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package pingpong;
 
 /**
@@ -66,8 +62,6 @@ public class PanelJuego extends JPanel {
     private final String nombreJugador1;
     private final String nombreJugador2;
     private final String dificultad;
-    
-    //Integrante 2
     private Jugador jugador1;
     private Jugador jugador2;
 
@@ -113,27 +107,13 @@ public class PanelJuego extends JPanel {
         this.nombreJugador2 = nombreJugador2;
         this.dificultad = dificultad;
         
-        //integrante 2
         jugador1 = new Jugador(nombreJugador1);
         jugador2 = new Jugador(nombreJugador2);
 
         partida = new Partida(jugador1, jugador2);
 
-        paleta1 = new Paleta(
-                30,
-                200,
-                15,
-                90,
-                8,
-                Color.WHITE);
-
-        paleta2 = new Paleta(
-                750,
-                200,
-                15,
-                90,
-                8,
-                Color.WHITE);
+        paleta1 = new Paleta(30,200,15,90,8,Color.WHITE);
+        paleta2 = new Paleta(750,200,15,90,8,Color.WHITE);
 
         setLayout(new BorderLayout());
         setBackground(EstiloVisual.FONDO_PRINCIPAL);
@@ -142,29 +122,29 @@ public class PanelJuego extends JPanel {
         construirPanelInferior();
         configurarTeclado();
         
-    //Integrante 2
-    Timer movimiento = new Timer(15, e -> {
+        //integrante 2
+        Timer movimiento = new Timer(15, e -> {
 
-    if(arribaJugador1)
-        paleta1.subir();
+        if(arribaJugador1)
+            paleta1.subir();
 
-    if(abajoJugador1)
-        paleta1.bajar();
+        if(abajoJugador1)
+            paleta1.bajar();
 
-    if(arribaJugador2)
-        paleta2.subir();
+        if(arribaJugador2)
+            paleta2.subir();
 
-    if(abajoJugador2)
-        paleta2.bajar();
+        if(abajoJugador2)
+            paleta2.bajar();
 
-    paleta1.validarLimites(areaJuego.getHeight());
-    paleta2.validarLimites(areaJuego.getHeight());
+        paleta1.validarLimites(areaJuego.getHeight());
+        paleta2.validarLimites(areaJuego.getHeight());
 
-    areaJuego.repaint();
+        areaJuego.repaint();
 
-});
+    });
 
-movimiento.start();
+    movimiento.start();
     }
 
     // ---------------------------------------------------------------
@@ -276,7 +256,8 @@ movimiento.start();
         int radio = 60;
         g2d.drawOval(ancho / 2 - radio, alto / 2 - radio, radio * 2, radio * 2);
         
-        //interante 2
+        //integrnte 2
+        
         paleta1.dibujar(g2d);
         paleta2.dibujar(g2d);
 
@@ -351,21 +332,6 @@ movimiento.start();
                     segundosRestantes <= 10 ? EstiloVisual.ACENTO_PELIGRO : EstiloVisual.TEXTO_CLARO);
             if (segundosRestantes <= 0) {
                 temporizadorSwing.stop();
-                partida.finalizarRonda();
-                partida.siguienteRonda();
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Fin de la ronda " + (partida.getRondaActual() - 1));
-
-                if (partida.partidaTerminada()) {
-
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Ganador de la partida: "
-                            + partida.obtenerGanador().getNombre());
-
-                }
                 // TODO Integrante 2: aqui se debe determinar el ganador de la ronda
                 // comparando puntajeJugador1 vs puntajeJugador2 (punto 6 del enunciado).
             }

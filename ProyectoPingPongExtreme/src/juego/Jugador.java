@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package juego;
 
 /**
@@ -9,6 +5,7 @@ package juego;
  * @author pserr
  */
 public class Jugador {
+
     // Nombre del jugador
     private String nombre;
 
@@ -21,7 +18,6 @@ public class Jugador {
     /**
      * Constructor
      * Se ejecuta cuando se crea un jugador nuevo.
-     * @param nombre
      */
     public Jugador(String nombre) {
         this.nombre = nombre;
@@ -29,7 +25,10 @@ public class Jugador {
         this.rondasGanadas = 0;
     }
 
-    //getter
+    // ==========================
+    // GETTERS
+    // ==========================
+
     public String getNombre() {
         return nombre;
     }
@@ -42,7 +41,9 @@ public class Jugador {
         return rondasGanadas;
     }
 
-    //setter
+    // ==========================
+    // SETTERS
+    // ==========================
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
@@ -56,11 +57,12 @@ public class Jugador {
         this.rondasGanadas = rondasGanadas;
     }
 
-    //metodos
-    
+    // ==========================
+    // MÉTODOS DEL JUEGO
+    // ==========================
+
     /**
      * Suma puntos al jugador.
-     * @param cantidad
      */
     public void sumarPuntos(int cantidad) {
         puntos += cantidad;
@@ -69,7 +71,6 @@ public class Jugador {
     /**
      * Resta puntos.
      * Evita que el puntaje sea menor que cero.
-     * @param cantidad
      */
     public void restarPuntos(int cantidad) {
         puntos -= cantidad;
@@ -103,7 +104,6 @@ public class Jugador {
 
     /**
      * Devuelve toda la información del jugador.
-     * @return 
      */
     @Override
     public String toString() {
@@ -114,4 +114,3 @@ public class Jugador {
                 '}';
     }
 }
-

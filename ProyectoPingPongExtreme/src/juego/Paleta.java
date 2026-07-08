@@ -1,28 +1,23 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package juego;
 
 import java.awt.Color;
 import java.awt.Graphics;
-
 
 /**
  *
  * @author pserr
  */
 public class Paleta {
-    
-    //posicion de la paleta
+
+    // Posición de la paleta
     private int x;
     private int y;
 
-    //tamaño de la  paleta
-    private final int ancho;
-    private final int alto;
+    // Tamaño
+    private int ancho;
+    private int alto;
 
-    // Velocidad
+    // Velocidad de movimiento
     private int velocidad;
 
     // Color de la paleta
@@ -30,12 +25,6 @@ public class Paleta {
 
     /**
      * Constructor
-     * @param x
-     * @param y
-     * @param ancho
-     * @param alto
-     * @param velocidad
-     * @param color
      */
     public Paleta(int x, int y, int ancho, int alto, int velocidad, Color color) {
         this.x = x;
@@ -46,7 +35,9 @@ public class Paleta {
         this.color = color;
     }
 
-    //getter
+    // ==========================
+    // GETTERS
+    // ==========================
 
     public int getX() {
         return x;
@@ -72,8 +63,10 @@ public class Paleta {
         return color;
     }
 
-    //setter
-    
+    // ==========================
+    // SETTERS
+    // ==========================
+
     public void setX(int x) {
         this.x = x;
     }
@@ -90,8 +83,10 @@ public class Paleta {
         this.color = color;
     }
 
-    // movimientos de la paleta
-    
+    // ==========================
+    // MOVIMIENTO
+    // ==========================
+
     /**
      * Mueve la paleta hacia arriba.
      */
@@ -126,7 +121,6 @@ public class Paleta {
 
     /**
      * Dibuja la paleta en el panel.
-     * @param g
      */
     public void dibujar(Graphics g) {
         g.setColor(color);
@@ -135,7 +129,6 @@ public class Paleta {
 
     /**
      * Reinicia la posición de la paleta.
-     * @param nuevaY
      */
     public void reiniciar(int nuevaY) {
         this.y = nuevaY;
