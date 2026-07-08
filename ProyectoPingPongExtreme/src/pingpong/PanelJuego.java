@@ -305,6 +305,16 @@ public class PanelJuego extends JPanel {
         puntajeJugador2 = 0;
         rondasGanadasJugador1 = 0;
         rondasGanadasJugador2 = 0;
+        
+        //integrante 2
+        //reinicia jugador
+        jugador1.reiniciarJugador();
+        jugador2.reiniciarJugador();
+        //crea una nueva partida
+        partida = new Partida(jugador1, jugador2);
+        //reinicia la paleta
+        paleta1.reiniciar(200);
+        paleta2.reiniciar(200);
 
         if (temporizadorSwing != null) {
             temporizadorSwing.stop();
@@ -332,11 +342,52 @@ public class PanelJuego extends JPanel {
                     segundosRestantes <= 10 ? EstiloVisual.ACENTO_PELIGRO : EstiloVisual.TEXTO_CLARO);
             if (segundosRestantes <= 0) {
                 temporizadorSwing.stop();
-                // TODO Integrante 2: aqui se debe determinar el ganador de la ronda
-                // comparando puntajeJugador1 vs puntajeJugador2 (punto 6 del enunciado).
-            }
-        });
-        temporizadorSwing.start();
+                
+            //integrante 2
+            // Finaliza la ronda
+            partida.finalizarRonda();
+
+            // Muestra el resultado de la ronda
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Fin de la ronda.\n\n"
+                    + "Ronda " + partida.getRondaActual() + "\n"
+                    + "Jugador 1: " + jugador1.getRondasGanadas() + " Rondas ganadas\n"
+                    + "Jugador 2: " + jugador2.getRondasGanadas() + " Rondas ganadas"
+            );
+
+                // Verifica si la partida terminó
+                if (partida.partidaTerminada()) {
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "¡Partida terminada!\n\n"
+                            + "Ganador: " + partida.obtenerGanador().getNombre()
+                    );
+
+                } else {
+
+                    // Pasa a la siguiente ronda
+                    partida.siguienteRonda();
+                    
+                    // Reinicia el marcador de la ronda
+                    puntajeJugador1 = 0;
+                    puntajeJugador2 = 0;
+                    actualizarEtiquetasPuntaje();
+                    
+                    paleta1.reiniciar(200);
+                    paleta2.reiniciar(200);
+
+                    // Reinicia el tiempo
+                    segundosRestantes = 60;
+                    etiquetaTemporizador.setText(formatearTiempo(segundosRestantes));
+
+                    // Comienza la siguiente ronda
+                    iniciarTemporizador();
+                    }
+                }
+            });
+                temporizadorSwing.start();
     }
 
     private String formatearTiempo(int segundos) {
@@ -421,9 +472,10 @@ public class PanelJuego extends JPanel {
 }
 
     private void actualizarEtiquetasPuntaje() {
-        etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntajeJugador1);
-        etiquetaPuntaje2.setText(nombreJugador2 + "  " + puntajeJugador2);
-    }
+    etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntajeJugador1);
+    etiquetaPuntaje2.setText(nombreJugador2 + "  " + puntajeJugador2);
+    
+}
 
     // ---------------------------------------------------------------
     // Puntos de extension para el resto del equipo
