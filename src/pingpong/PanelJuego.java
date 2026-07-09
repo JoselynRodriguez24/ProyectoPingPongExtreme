@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package pingpong;
 
 /**
@@ -14,6 +10,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+
+import juego.Jugador;
+import juego.Paleta;
+import juego.Partida;
+import juego.Bola;
+import juego.TipoBola;
 
 /**
  * Panel principal del area de juego.
@@ -62,6 +64,15 @@ public class PanelJuego extends JPanel {
     private final String nombreJugador1;
     private final String nombreJugador2;
     private final String dificultad;
+    private Jugador jugador1;
+    private Jugador jugador2;
+
+    private Paleta paleta1;
+    private Paleta paleta2;
+
+    private Partida partida;
+    private Bola bola;
+    private Thread hiloBola;
 
     // TODO Integrante 4: sincronizar estos puntajes (AtomicInteger / synchronized) cuando
     // varios hilos de bolas empiecen a modificarlos al mismo tiempo.
@@ -99,6 +110,14 @@ public class PanelJuego extends JPanel {
         this.nombreJugador1 = nombreJugador1;
         this.nombreJugador2 = nombreJugador2;
         this.dificultad = dificultad;
+        
+        jugador1 = new Jugador(nombreJugador1);
+        jugador2 = new Jugador(nombreJugador2);
+
+        partida = new Partida(jugador1, jugador2);
+
+        paleta1 = new Paleta(30,200,15,90,8,Color.WHITE);
+        paleta2 = new Paleta(750,200,15,90,8,Color.WHITE);
 
         setLayout(new BorderLayout());
         setBackground(EstiloVisual.FONDO_PRINCIPAL);
@@ -106,7 +125,80 @@ public class PanelJuego extends JPanel {
         construirAreaJuego();
         construirPanelInferior();
         configurarTeclado();
+        
+        //integrante 2
+        Timer movimiento = new Timer(15, e -> {
+
+        if(arribaJugador1)
+            paleta1.subir();
+
+        if(abajoJugador1)
+            paleta1.bajar();
+
+        if(arribaJugador2)
+            paleta2.subir();
+
+        if(abajoJugador2)
+            paleta2.bajar();
+
+        paleta1.validarLimites(areaJuego.getHeight());
+        paleta2.validarLimites(areaJuego.getHeight());
+
+        areaJuego.repaint();
+
+    });
+
+    movimiento.start();
+    
+    agregarDibujable((g2d, ancho, alto) -> {
+    
+    if (bola != null) {
+
+        bola.rebotar(ancho, alto);
+
+        boolean ibaIzquierda = bola.getVelocidadX() < 0;
+
+        bola.verificarChoquePaleta(paleta1);
+        bola.verificarChoquePaleta(paleta2);
+
+        boolean vaDerecha = bola.getVelocidadX() > 0;
+
+        if (bola.puedeAplicarCongelante() && ibaIzquierda != vaDerecha) {
+
+            if (vaDerecha) {
+                
+                paleta2.cambiarVelocidadTemporal(3, 3000);
+            } else {
+                
+                paleta1.cambiarVelocidadTemporal(3, 3000);
     }
+
+    bola.marcarCongelanteUsado();
+}
+
+        if (bola.salioPorIzquierda()) {
+
+            sumarPuntajeJugador2(bola.getTipo().getPuntos());
+
+            bola.reiniciarPosicion(ancho / 2, alto / 2);
+            bola.invertirDireccionX();
+        }
+
+        if (bola.salioPorDerecha(ancho)) {
+
+            sumarPuntajeJugador1(bola.getTipo().getPuntos());
+
+            bola.reiniciarPosicion(ancho / 2, alto / 2);
+            bola.invertirDireccionX();
+        }
+
+        bola.dibujar(g2d);
+    }
+
+    });
+    
+    }
+   
 
     // ---------------------------------------------------------------
     // Construccion de interfaz
@@ -216,6 +308,11 @@ public class PanelJuego extends JPanel {
         g2d.setStroke(new BasicStroke(2));
         int radio = 60;
         g2d.drawOval(ancho / 2 - radio, alto / 2 - radio, radio * 2, radio * 2);
+        
+        //integrnte 2
+        
+        paleta1.dibujar(g2d);
+        paleta2.dibujar(g2d);
 
         // Delega el dibujo de paletas y bolas a quien se haya registrado.
         for (Dibujable d : dibujables) {
@@ -236,6 +333,17 @@ public class PanelJuego extends JPanel {
 
         iniciarTemporizador();
         notificarIniciar();
+        bola = new Bola(
+            areaJuego.getWidth() / 2,
+            areaJuego.getHeight() / 2,
+            20,
+            4,
+            4,
+            obtenerTipoAleatorio()
+        );
+
+        hiloBola = new Thread(bola);
+        hiloBola.start();
         solicitarFoco();
     }
 
@@ -248,9 +356,18 @@ public class PanelJuego extends JPanel {
         } else {
             temporizadorSwing.start();
         }
+        if (bola != null) {
+
+        if (partidaPausada) {
+            bola.pausar();
+        } else {
+            bola.reanudar();
+        }
 
         notificarPausarReanudar(partidaPausada);
         solicitarFoco();
+        
+        }   
     }
 
     private void alPresionarReiniciar(ActionEvent e) {
@@ -261,9 +378,24 @@ public class PanelJuego extends JPanel {
         puntajeJugador2 = 0;
         rondasGanadasJugador1 = 0;
         rondasGanadasJugador2 = 0;
+        
+        //integrante 2
+        //reinicia jugador
+        jugador1.reiniciarJugador();
+        jugador2.reiniciarJugador();
+        //crea una nueva partida
+        partida = new Partida(jugador1, jugador2);
+        //reinicia la paleta
+        paleta1.reiniciar(200);
+        paleta2.reiniciar(200);
 
         if (temporizadorSwing != null) {
             temporizadorSwing.stop();
+            
+        if (bola != null) {
+            bola.detener();
+            bola = null;
+            hiloBola = null;
         }
 
         actualizarEtiquetasPuntaje();
@@ -278,6 +410,7 @@ public class PanelJuego extends JPanel {
         notificarReiniciar();
         areaJuego.repaint();
         solicitarFoco();
+        }
     }
 
     private void iniciarTemporizador() {
@@ -288,11 +421,52 @@ public class PanelJuego extends JPanel {
                     segundosRestantes <= 10 ? EstiloVisual.ACENTO_PELIGRO : EstiloVisual.TEXTO_CLARO);
             if (segundosRestantes <= 0) {
                 temporizadorSwing.stop();
-                // TODO Integrante 2: aqui se debe determinar el ganador de la ronda
-                // comparando puntajeJugador1 vs puntajeJugador2 (punto 6 del enunciado).
-            }
-        });
-        temporizadorSwing.start();
+                
+            //integrante 2
+            // Finaliza la ronda
+            partida.finalizarRonda();
+
+            // Muestra el resultado de la ronda
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Fin de la ronda.\n\n"
+                    + "Ronda " + partida.getRondaActual() + "\n"
+                    + "Jugador 1: " + jugador1.getRondasGanadas() + " Rondas ganadas\n"
+                    + "Jugador 2: " + jugador2.getRondasGanadas() + " Rondas ganadas"
+            );
+
+                // Verifica si la partida terminó
+                if (partida.partidaTerminada()) {
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "¡Partida terminada!\n\n"
+                            + "Ganador: " + partida.obtenerGanador().getNombre()
+                    );
+
+                } else {
+
+                    // Pasa a la siguiente ronda
+                    partida.siguienteRonda();
+                    
+                    // Reinicia el marcador de la ronda
+                    puntajeJugador1 = 0;
+                    puntajeJugador2 = 0;
+                    actualizarEtiquetasPuntaje();
+                    
+                    paleta1.reiniciar(200);
+                    paleta2.reiniciar(200);
+
+                    // Reinicia el tiempo
+                    segundosRestantes = 60;
+                    etiquetaTemporizador.setText(formatearTiempo(segundosRestantes));
+
+                    // Comienza la siguiente ronda
+                    iniciarTemporizador();
+                    }
+                }
+            });
+                temporizadorSwing.start();
     }
 
     private String formatearTiempo(int segundos) {
@@ -365,19 +539,22 @@ public class PanelJuego extends JPanel {
     // ---------------------------------------------------------------
 
     public void sumarPuntajeJugador1(int puntos) {
-        puntajeJugador1 += puntos;
-        actualizarEtiquetasPuntaje();
-    }
+    puntajeJugador1 += puntos;
+    jugador1.sumarPuntos(puntos);
+    actualizarEtiquetasPuntaje();
+}
 
     public void sumarPuntajeJugador2(int puntos) {
-        puntajeJugador2 += puntos;
-        actualizarEtiquetasPuntaje();
-    }
+    puntajeJugador2 += puntos;
+    jugador2.sumarPuntos(puntos);
+    actualizarEtiquetasPuntaje();
+}
 
     private void actualizarEtiquetasPuntaje() {
-        etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntajeJugador1);
-        etiquetaPuntaje2.setText(nombreJugador2 + "  " + puntajeJugador2);
-    }
+    etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntajeJugador1);
+    etiquetaPuntaje2.setText(nombreJugador2 + "  " + puntajeJugador2);
+    
+}
 
     // ---------------------------------------------------------------
     // Puntos de extension para el resto del equipo
@@ -402,9 +579,21 @@ public class PanelJuego extends JPanel {
     public boolean isPartidaPausada() { return partidaPausada; }
     public String getDificultad() { return dificultad; }
 
+    private TipoBola obtenerTipoAleatorio() {
+
+        TipoBola[] tipos = TipoBola.values();
+
+        int indice = (int) (Math.random() * tipos.length);
+
+        return tipos[indice];
+    }
+    
     private void notificarIniciar() {
         for (ControlJuegoListener l : listeners) l.onIniciar();
     }
+        
+    
+   
 
     private void notificarPausarReanudar(boolean pausado) {
         for (ControlJuegoListener l : listeners) l.onPausarReanudar(pausado);
