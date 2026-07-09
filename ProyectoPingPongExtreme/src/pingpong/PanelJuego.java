@@ -14,6 +14,8 @@ import java.util.List;
 import juego.Jugador;
 import juego.Paleta;
 import juego.Partida;
+import juego.Bola;
+import juego.TipoBola;
 
 /**
  * Panel principal del area de juego.
@@ -69,6 +71,8 @@ public class PanelJuego extends JPanel {
     private Paleta paleta2;
 
     private Partida partida;
+    private Bola bola;
+    private Thread hiloBola;
 
     // TODO Integrante 4: sincronizar estos puntajes (AtomicInteger / synchronized) cuando
     // varios hilos de bolas empiecen a modificarlos al mismo tiempo.
@@ -145,7 +149,56 @@ public class PanelJuego extends JPanel {
     });
 
     movimiento.start();
+    
+    agregarDibujable((g2d, ancho, alto) -> {
+    
+    if (bola != null) {
+
+        bola.rebotar(ancho, alto);
+
+        boolean ibaIzquierda = bola.getVelocidadX() < 0;
+
+        bola.verificarChoquePaleta(paleta1);
+        bola.verificarChoquePaleta(paleta2);
+
+        boolean vaDerecha = bola.getVelocidadX() > 0;
+
+        if (bola.puedeAplicarCongelante() && ibaIzquierda != vaDerecha) {
+
+            if (vaDerecha) {
+                
+                paleta2.cambiarVelocidadTemporal(3, 3000);
+            } else {
+                
+                paleta1.cambiarVelocidadTemporal(3, 3000);
     }
+
+    bola.marcarCongelanteUsado();
+}
+
+        if (bola.salioPorIzquierda()) {
+
+            sumarPuntajeJugador2(bola.getTipo().getPuntos());
+
+            bola.reiniciarPosicion(ancho / 2, alto / 2);
+            bola.invertirDireccionX();
+        }
+
+        if (bola.salioPorDerecha(ancho)) {
+
+            sumarPuntajeJugador1(bola.getTipo().getPuntos());
+
+            bola.reiniciarPosicion(ancho / 2, alto / 2);
+            bola.invertirDireccionX();
+        }
+
+        bola.dibujar(g2d);
+    }
+
+    });
+    
+    }
+   
 
     // ---------------------------------------------------------------
     // Construccion de interfaz
@@ -280,6 +333,17 @@ public class PanelJuego extends JPanel {
 
         iniciarTemporizador();
         notificarIniciar();
+        bola = new Bola(
+            areaJuego.getWidth() / 2,
+            areaJuego.getHeight() / 2,
+            20,
+            4,
+            4,
+            obtenerTipoAleatorio()
+        );
+
+        hiloBola = new Thread(bola);
+        hiloBola.start();
         solicitarFoco();
     }
 
@@ -292,9 +356,18 @@ public class PanelJuego extends JPanel {
         } else {
             temporizadorSwing.start();
         }
+        if (bola != null) {
+
+        if (partidaPausada) {
+            bola.pausar();
+        } else {
+            bola.reanudar();
+        }
 
         notificarPausarReanudar(partidaPausada);
         solicitarFoco();
+        
+        }   
     }
 
     private void alPresionarReiniciar(ActionEvent e) {
@@ -318,6 +391,11 @@ public class PanelJuego extends JPanel {
 
         if (temporizadorSwing != null) {
             temporizadorSwing.stop();
+            
+        if (bola != null) {
+            bola.detener();
+            bola = null;
+            hiloBola = null;
         }
 
         actualizarEtiquetasPuntaje();
@@ -332,6 +410,7 @@ public class PanelJuego extends JPanel {
         notificarReiniciar();
         areaJuego.repaint();
         solicitarFoco();
+        }
     }
 
     private void iniciarTemporizador() {
@@ -500,9 +579,21 @@ public class PanelJuego extends JPanel {
     public boolean isPartidaPausada() { return partidaPausada; }
     public String getDificultad() { return dificultad; }
 
+    private TipoBola obtenerTipoAleatorio() {
+
+        TipoBola[] tipos = TipoBola.values();
+
+        int indice = (int) (Math.random() * tipos.length);
+
+        return tipos[indice];
+    }
+    
     private void notificarIniciar() {
         for (ControlJuegoListener l : listeners) l.onIniciar();
     }
+        
+    
+   
 
     private void notificarPausarReanudar(boolean pausado) {
         for (ControlJuegoListener l : listeners) l.onPausarReanudar(pausado);

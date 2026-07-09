@@ -144,4 +144,21 @@ public class Paleta {
                 ", velocidad=" + velocidad +
                 '}';
     }
+
+    public void cambiarVelocidadTemporal(int nuevaVelocidad, int milisegundos) {
+
+    int velocidadOriginal = velocidad;
+
+    velocidad = nuevaVelocidad;
+
+    new Thread(() -> {
+        try {
+            Thread.sleep(milisegundos);
+        } catch (InterruptedException e) {
+        }
+
+        velocidad = velocidadOriginal;
+
+    }).start();
+    }
 }
