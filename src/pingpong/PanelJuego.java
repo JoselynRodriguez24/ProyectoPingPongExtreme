@@ -16,47 +16,58 @@ import juego.Paleta;
 import juego.Partida;
 import juego.Bola;
 import juego.TipoBola;
+import juego.ControladorConcurrencia;
 
 /**
  * Panel principal del area de juego.
  *
  * Responsable: Integrante 1 (Interfaz grafica y controles).
  *
- * Esta clase entrega TODO lo que pide el punto 1 y 2 del enunciado:
- *  - Area de juego (JPanel)
- *  - Nombres y puntajes visibles
- *  - Botones Iniciar / Pausar-Reanudar / Reiniciar
- *  - Temporizador visible
- *  - Captura de teclado (W/S y flechas arriba/abajo)
+ * Esta clase entrega TODO lo que pide el punto 1 y 2 del enunciado: - Area de
+ * juego (JPanel) - Nombres y puntajes visibles - Botones Iniciar /
+ * Pausar-Reanudar / Reiniciar - Temporizador visible - Captura de teclado (W/S
+ * y flechas arriba/abajo)
  *
  * IMPORTANTE - puntos de integracion con el resto del equipo:
  *
- *  - Integrante 2 (paletas): debe leer el estado del teclado con
- *    isArribaJugador1(), isAbajoJugador1(), isArribaJugador2(), isAbajoJugador2()
- *    dentro de su clase Paleta para mover las paletas y validar limites.
+ * - Integrante 2 (paletas): debe leer el estado del teclado con
+ * isArribaJugador1(), isAbajoJugador1(), isArribaJugador2(), isAbajoJugador2()
+ * dentro de su clase Paleta para mover las paletas y validar limites.
  *
- *  - Integrante 3 (bolas/hilos): debe dibujar sus bolas registrando un
- *    Dibujable con agregarDibujable(...). Cada hilo de bola solo necesita
- *    llamar repaint() (heredado de JPanel) despues de mover su posicion.
+ * - Integrante 3 (bolas/hilos): debe dibujar sus bolas registrando un Dibujable
+ * con agregarDibujable(...). Cada hilo de bola solo necesita llamar repaint()
+ * (heredado de JPanel) despues de mover su posicion.
  *
- *  - Integrante 4 (concurrencia/puntajes): debe reemplazar los campos
- *    puntajeJugador1/puntajeJugador2 por una estructura sincronizada
- *    (AtomicInteger, por ejemplo) y usar agregarControlListener(...) para
- *    enterarse cuando el usuario presiona Iniciar / Pausar / Reiniciar y asi
- *    controlar sus hilos y su coleccion concurrente de bolas.
+ * - Integrante 4 (concurrencia/puntajes): debe reemplazar los campos
+ * puntajeJugador1/puntajeJugador2 por una estructura sincronizada
+ * (AtomicInteger, por ejemplo) y usar agregarControlListener(...) para
+ * enterarse cuando el usuario presiona Iniciar / Pausar / Reiniciar y asi
+ * controlar sus hilos y su coleccion concurrente de bolas.
  */
 public class PanelJuego extends JPanel {
 
-    /** Interfaz para que Integrante 2 y 3 dibujen sus propios elementos (paletas y bolas). */
+    /**
+     * Interfaz para que Integrante 2 y 3 dibujen sus propios elementos (paletas
+     * y bolas).
+     */
     public interface Dibujable {
+
         void dibujar(Graphics2D g2d, int anchoArea, int altoArea);
     }
 
-    /** Interfaz para que el resto del equipo reaccione a los botones de control. */
+    /**
+     * Interfaz para que el resto del equipo reaccione a los botones de control.
+     */
     public interface ControlJuegoListener {
-        default void onIniciar() {}
-        default void onPausarReanudar(boolean pausado) {}
-        default void onReiniciar() {}
+
+        default void onIniciar() {
+        }
+
+        default void onPausarReanudar(boolean pausado) {
+        }
+
+        default void onReiniciar() {
+        }
     }
 
     private static final int DURACION_RONDA_SEGUNDOS = 60;
@@ -71,14 +82,12 @@ public class PanelJuego extends JPanel {
     private Paleta paleta2;
 
     private Partida partida;
-    private Bola bola;
-    private Thread hiloBola;
+
+    private ControladorConcurrencia controlador;
+    private static final int MAXIMO_BOLAS = 3;
 
     // TODO Integrante 4: sincronizar estos puntajes (AtomicInteger / synchronized) cuando
     // varios hilos de bolas empiecen a modificarlos al mismo tiempo.
-    private int puntajeJugador1 = 0;
-    private int puntajeJugador2 = 0;
-
     private int rondasGanadasJugador1 = 0;
     private int rondasGanadasJugador2 = 0;
 
@@ -110,14 +119,14 @@ public class PanelJuego extends JPanel {
         this.nombreJugador1 = nombreJugador1;
         this.nombreJugador2 = nombreJugador2;
         this.dificultad = dificultad;
-        
+
         jugador1 = new Jugador(nombreJugador1);
         jugador2 = new Jugador(nombreJugador2);
 
         partida = new Partida(jugador1, jugador2);
 
-        paleta1 = new Paleta(30,200,15,90,8,Color.WHITE);
-        paleta2 = new Paleta(750,200,15,90,8,Color.WHITE);
+        paleta1 = new Paleta(30, 200, 15, 90, 8, Color.WHITE);
+        paleta2 = new Paleta(750, 200, 15, 90, 8, Color.WHITE);
 
         setLayout(new BorderLayout());
         setBackground(EstiloVisual.FONDO_PRINCIPAL);
@@ -125,84 +134,77 @@ public class PanelJuego extends JPanel {
         construirAreaJuego();
         construirPanelInferior();
         configurarTeclado();
-        
+
         //integrante 2
         Timer movimiento = new Timer(15, e -> {
 
-        if(arribaJugador1)
-            paleta1.subir();
+            if (arribaJugador1) {
+                paleta1.subir();
+            }
 
-        if(abajoJugador1)
-            paleta1.bajar();
+            if (abajoJugador1) {
+                paleta1.bajar();
+            }
 
-        if(arribaJugador2)
-            paleta2.subir();
+            if (arribaJugador2) {
+                paleta2.subir();
+            }
 
-        if(abajoJugador2)
-            paleta2.bajar();
+            if (abajoJugador2) {
+                paleta2.bajar();
+            }
 
-        paleta1.validarLimites(areaJuego.getHeight());
-        paleta2.validarLimites(areaJuego.getHeight());
+            paleta1.validarLimites(areaJuego.getHeight());
+            paleta2.validarLimites(areaJuego.getHeight());
 
-        areaJuego.repaint();
+            areaJuego.repaint();
 
-    });
+        });
 
-    movimiento.start();
-    
-    agregarDibujable((g2d, ancho, alto) -> {
-    
-    if (bola != null) {
+        movimiento.start();
 
-        bola.rebotar(ancho, alto);
+        agregarDibujable((g2d, ancho, alto) -> {
 
-        boolean ibaIzquierda = bola.getVelocidadX() < 0;
+            if (controlador != null) {
+                for (Bola bola : controlador.getBolasActivas()) {
 
-        bola.verificarChoquePaleta(paleta1);
-        bola.verificarChoquePaleta(paleta2);
+                    bola.rebotar(ancho, alto);
 
-        boolean vaDerecha = bola.getVelocidadX() > 0;
+                    boolean ibaIzquierda = bola.getVelocidadX() < 0;
 
-        if (bola.puedeAplicarCongelante() && ibaIzquierda != vaDerecha) {
+                    bola.verificarChoquePaleta(paleta1);
+                    bola.verificarChoquePaleta(paleta2);
 
-            if (vaDerecha) {
-                
-                paleta2.cambiarVelocidadTemporal(3, 3000);
-            } else {
-                
-                paleta1.cambiarVelocidadTemporal(3, 3000);
-    }
+                    boolean vaDerecha = bola.getVelocidadX() > 0;
 
-    bola.marcarCongelanteUsado();
-}
+                    if (bola.puedeAplicarCongelante() && ibaIzquierda != vaDerecha) {
+                        if (vaDerecha) {
+                            paleta2.cambiarVelocidadTemporal(3, 3000);
+                        } else {
+                            paleta1.cambiarVelocidadTemporal(3, 3000);
+                        }
+                        bola.marcarCongelanteUsado();
+                    }
 
-        if (bola.salioPorIzquierda()) {
+                    if (bola.salioPorIzquierda()) {
+                        sumarPuntajeJugador2(bola.getTipo().getPuntos());
+                        bola.reiniciarPosicion(ancho / 2, alto / 2);
+                        bola.invertirDireccionX();
+                    }
 
-            sumarPuntajeJugador2(bola.getTipo().getPuntos());
+                    if (bola.salioPorDerecha(ancho)) {
+                        sumarPuntajeJugador1(bola.getTipo().getPuntos());
+                        bola.reiniciarPosicion(ancho / 2, alto / 2);
+                        bola.invertirDireccionX();
+                    }
 
-            bola.reiniciarPosicion(ancho / 2, alto / 2);
-            bola.invertirDireccionX();
-        }
-
-        if (bola.salioPorDerecha(ancho)) {
-
-            sumarPuntajeJugador1(bola.getTipo().getPuntos());
-
-            bola.reiniciarPosicion(ancho / 2, alto / 2);
-            bola.invertirDireccionX();
-        }
-
-        bola.dibujar(g2d);
-    }
-
-    });
-    
-    }
-   
-
-    // ---------------------------------------------------------------
-    // Construccion de interfaz
-    // ---------------------------------------------------------------
+                    bola.dibujar(g2d);
+                }
+            }
+         });
+    }     // ---------------------------------------------------------------
+        // Construccion de interfaz
+        // ---------------------------------------------------------------
 
     private void construirPanelSuperior() {
         JPanel panelSuperior = new JPanel(new BorderLayout());
@@ -308,9 +310,8 @@ public class PanelJuego extends JPanel {
         g2d.setStroke(new BasicStroke(2));
         int radio = 60;
         g2d.drawOval(ancho / 2 - radio, alto / 2 - radio, radio * 2, radio * 2);
-        
+
         //integrnte 2
-        
         paleta1.dibujar(g2d);
         paleta2.dibujar(g2d);
 
@@ -323,7 +324,6 @@ public class PanelJuego extends JPanel {
     // ---------------------------------------------------------------
     // Botones de control
     // ---------------------------------------------------------------
-
     private void alPresionarIniciar(ActionEvent e) {
         partidaIniciada = true;
         partidaPausada = false;
@@ -333,17 +333,20 @@ public class PanelJuego extends JPanel {
 
         iniciarTemporizador();
         notificarIniciar();
-        bola = new Bola(
-            areaJuego.getWidth() / 2,
-            areaJuego.getHeight() / 2,
-            20,
-            4,
-            4,
-            obtenerTipoAleatorio()
+
+        controlador = new ControladorConcurrencia(MAXIMO_BOLAS);
+
+        Bola primeraBola = new Bola(
+                areaJuego.getWidth() / 2,
+                areaJuego.getHeight() / 2,
+                20,
+                4,
+                4,
+                obtenerTipoAleatorio()
         );
 
-        hiloBola = new Thread(bola);
-        hiloBola.start();
+        controlador.agregarBola(primeraBola);
+
         solicitarFoco();
     }
 
@@ -356,29 +359,27 @@ public class PanelJuego extends JPanel {
         } else {
             temporizadorSwing.start();
         }
-        if (bola != null) {
 
-        if (partidaPausada) {
-            bola.pausar();
-        } else {
-            bola.reanudar();
+        if (controlador != null) {
+            if (partidaPausada) {
+                controlador.pausarTodas();
+            } else {
+                controlador.reanudarTodas();
+            }
+
+            notificarPausarReanudar(partidaPausada);
+            solicitarFoco();
+
         }
-
-        notificarPausarReanudar(partidaPausada);
-        solicitarFoco();
-        
-        }   
     }
 
     private void alPresionarReiniciar(ActionEvent e) {
         partidaIniciada = false;
         partidaPausada = false;
         segundosRestantes = DURACION_RONDA_SEGUNDOS;
-        puntajeJugador1 = 0;
-        puntajeJugador2 = 0;
         rondasGanadasJugador1 = 0;
         rondasGanadasJugador2 = 0;
-        
+
         //integrante 2
         //reinicia jugador
         jugador1.reiniciarJugador();
@@ -391,25 +392,24 @@ public class PanelJuego extends JPanel {
 
         if (temporizadorSwing != null) {
             temporizadorSwing.stop();
-            
-        if (bola != null) {
-            bola.detener();
-            bola = null;
-            hiloBola = null;
-        }
 
-        actualizarEtiquetasPuntaje();
-        etiquetaTemporizador.setText(formatearTiempo(segundosRestantes));
-        etiquetaRondas.setText("RONDAS 0 - 0   |   DIFICULTAD: " + dificultad.toUpperCase());
+            if (controlador != null) {
+                controlador.detenerTodas();
+            }
+            controlador = new ControladorConcurrencia(MAXIMO_BOLAS);
 
-        botonIniciar.setEnabled(true);
-        botonPausarReanudar.setEnabled(false);
-        botonPausarReanudar.setText("PAUSAR");
-        botonReiniciar.setEnabled(false);
+            actualizarEtiquetasPuntaje();
+            etiquetaTemporizador.setText(formatearTiempo(segundosRestantes));
+            etiquetaRondas.setText("RONDAS 0 - 0   |   DIFICULTAD: " + dificultad.toUpperCase());
 
-        notificarReiniciar();
-        areaJuego.repaint();
-        solicitarFoco();
+            botonIniciar.setEnabled(true);
+            botonPausarReanudar.setEnabled(false);
+            botonPausarReanudar.setText("PAUSAR");
+            botonReiniciar.setEnabled(false);
+
+            notificarReiniciar();
+            areaJuego.repaint();
+            solicitarFoco();
         }
     }
 
@@ -421,19 +421,19 @@ public class PanelJuego extends JPanel {
                     segundosRestantes <= 10 ? EstiloVisual.ACENTO_PELIGRO : EstiloVisual.TEXTO_CLARO);
             if (segundosRestantes <= 0) {
                 temporizadorSwing.stop();
-                
-            //integrante 2
-            // Finaliza la ronda
-            partida.finalizarRonda();
 
-            // Muestra el resultado de la ronda
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Fin de la ronda.\n\n"
-                    + "Ronda " + partida.getRondaActual() + "\n"
-                    + "Jugador 1: " + jugador1.getRondasGanadas() + " Rondas ganadas\n"
-                    + "Jugador 2: " + jugador2.getRondasGanadas() + " Rondas ganadas"
-            );
+                //integrante 2
+                // Finaliza la ronda
+                partida.finalizarRonda();
+
+                // Muestra el resultado de la ronda
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Fin de la ronda.\n\n"
+                        + "Ronda " + partida.getRondaActual() + "\n"
+                        + "Jugador 1: " + jugador1.getRondasGanadas() + " Rondas ganadas\n"
+                        + "Jugador 2: " + jugador2.getRondasGanadas() + " Rondas ganadas"
+                );
 
                 // Verifica si la partida terminó
                 if (partida.partidaTerminada()) {
@@ -448,12 +448,13 @@ public class PanelJuego extends JPanel {
 
                     // Pasa a la siguiente ronda
                     partida.siguienteRonda();
-                    
+
                     // Reinicia el marcador de la ronda
-                    puntajeJugador1 = 0;
-                    puntajeJugador2 = 0;
+                    if (controlador != null) {
+                        controlador.reiniciarPuntajes();
+                    }
                     actualizarEtiquetasPuntaje();
-                    
+
                     paleta1.reiniciar(200);
                     paleta2.reiniciar(200);
 
@@ -463,10 +464,10 @@ public class PanelJuego extends JPanel {
 
                     // Comienza la siguiente ronda
                     iniciarTemporizador();
-                    }
                 }
-            });
-                temporizadorSwing.start();
+            }
+        });
+        temporizadorSwing.start();
     }
 
     private String formatearTiempo(int segundos) {
@@ -478,7 +479,6 @@ public class PanelJuego extends JPanel {
     // ---------------------------------------------------------------
     // Teclado (W/S y flechas)
     // ---------------------------------------------------------------
-
     private void configurarTeclado() {
         // Se usan Key Bindings (en vez de KeyListener) porque funcionan sin importar
         // que componente tenga el foco exacto dentro de la ventana.
@@ -499,11 +499,12 @@ public class PanelJuego extends JPanel {
     }
 
     private interface ConsumidorBooleano {
+
         void aceptar(boolean valor);
     }
 
     private void registrarTecla(InputMap inputMap, ActionMap actionMap, int keyCode, String nombreAccion,
-                                 boolean valor, ConsumidorBooleano consumidor) {
+            boolean valor, ConsumidorBooleano consumidor) {
         inputMap.put(KeyStroke.getKeyStroke(keyCode, 0, false), nombreAccion);
         actionMap.put(nombreAccion, new AbstractAction() {
             @Override
@@ -514,7 +515,7 @@ public class PanelJuego extends JPanel {
     }
 
     private void registrarTeclaLiberada(InputMap inputMap, ActionMap actionMap, int keyCode, String nombreAccion,
-                                         ConsumidorBooleano consumidor) {
+            ConsumidorBooleano consumidor) {
         inputMap.put(KeyStroke.getKeyStroke(keyCode, 0, true), nombreAccion);
         actionMap.put(nombreAccion, new AbstractAction() {
             @Override
@@ -529,55 +530,84 @@ public class PanelJuego extends JPanel {
     }
 
     // Metodos de lectura para que Integrante 2 mueva las paletas.
-    public boolean isArribaJugador1() { return arribaJugador1; }
-    public boolean isAbajoJugador1() { return abajoJugador1; }
-    public boolean isArribaJugador2() { return arribaJugador2; }
-    public boolean isAbajoJugador2() { return abajoJugador2; }
+    public boolean isArribaJugador1() {
+        return arribaJugador1;
+    }
+
+    public boolean isAbajoJugador1() {
+        return abajoJugador1;
+    }
+
+    public boolean isArribaJugador2() {
+        return arribaJugador2;
+    }
+
+    public boolean isAbajoJugador2() {
+        return abajoJugador2;
+    }
 
     // ---------------------------------------------------------------
     // Puntajes (uso temporal; Integrante 4 debe sincronizar esto)
     // ---------------------------------------------------------------
-
     public void sumarPuntajeJugador1(int puntos) {
-    puntajeJugador1 += puntos;
-    jugador1.sumarPuntos(puntos);
-    actualizarEtiquetasPuntaje();
-}
+        if (controlador != null) {
+            controlador.sumarPuntoJugador1(puntos);
+        }
+        jugador1.sumarPuntos(puntos);
+        actualizarEtiquetasPuntaje();
+    }
 
     public void sumarPuntajeJugador2(int puntos) {
-    puntajeJugador2 += puntos;
-    jugador2.sumarPuntos(puntos);
-    actualizarEtiquetasPuntaje();
-}
+        if (controlador != null) {
+            controlador.sumarPuntoJugador2(puntos);
+        }
+        jugador2.sumarPuntos(puntos);
+        actualizarEtiquetasPuntaje();
+    }
 
     private void actualizarEtiquetasPuntaje() {
-    etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntajeJugador1);
-    etiquetaPuntaje2.setText(nombreJugador2 + "  " + puntajeJugador2);
-    
-}
+        int puntos1 = controlador != null ? controlador.getPuntajeJugador1() : 0;
+        int puntos2 = controlador != null ? controlador.getPuntajeJugador2() : 0;
+        etiquetaPuntaje1.setText(nombreJugador1 + "  " + puntos1);
+        etiquetaPuntaje2.setText(nombreJugador2 + "  " + puntos2);
+    }
 
     // ---------------------------------------------------------------
     // Puntos de extension para el resto del equipo
     // ---------------------------------------------------------------
-
-    /** Integrante 2 y 3: registren aqui como se dibujan paletas y bolas. */
+    /**
+     * Integrante 2 y 3: registren aqui como se dibujan paletas y bolas.
+     */
     public void agregarDibujable(Dibujable dibujable) {
         dibujables.add(dibujable);
     }
 
-    /** Integrante 4: escuchen aqui los eventos de Iniciar/Pausar/Reiniciar. */
+    /**
+     * Integrante 4: escuchen aqui los eventos de Iniciar/Pausar/Reiniciar.
+     */
     public void agregarControlListener(ControlJuegoListener listener) {
         listeners.add(listener);
     }
 
-    /** Area de juego real (donde se deben dibujar paletas y bolas con coordenadas). */
+    /**
+     * Area de juego real (donde se deben dibujar paletas y bolas con
+     * coordenadas).
+     */
     public JPanel getAreaJuego() {
         return areaJuego;
     }
 
-    public boolean isPartidaIniciada() { return partidaIniciada; }
-    public boolean isPartidaPausada() { return partidaPausada; }
-    public String getDificultad() { return dificultad; }
+    public boolean isPartidaIniciada() {
+        return partidaIniciada;
+    }
+
+    public boolean isPartidaPausada() {
+        return partidaPausada;
+    }
+
+    public String getDificultad() {
+        return dificultad;
+    }
 
     private TipoBola obtenerTipoAleatorio() {
 
@@ -587,19 +617,22 @@ public class PanelJuego extends JPanel {
 
         return tipos[indice];
     }
-    
+
     private void notificarIniciar() {
-        for (ControlJuegoListener l : listeners) l.onIniciar();
+        for (ControlJuegoListener l : listeners) {
+            l.onIniciar();
+        }
     }
-        
-    
-   
 
     private void notificarPausarReanudar(boolean pausado) {
-        for (ControlJuegoListener l : listeners) l.onPausarReanudar(pausado);
+        for (ControlJuegoListener l : listeners) {
+            l.onPausarReanudar(pausado);
+        }
     }
 
     private void notificarReiniciar() {
-        for (ControlJuegoListener l : listeners) l.onReiniciar();
+        for (ControlJuegoListener l : listeners) {
+            l.onReiniciar();
+        }
     }
 }
